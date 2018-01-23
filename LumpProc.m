@@ -4,7 +4,6 @@ function h = LumpProc(h)
 %
 pmovie = 0;
 tic;
-
 h.binfile = fullfile(h.binfolder, 'mov.bin');
 
 % make binary file------------------------------- %
@@ -17,8 +16,7 @@ h.avgmotion = avgmotion;
 h.npix      = npix;
 
 %%
-% compute svd ---------------------------------- %
-keyboard;
+% compute svd ----------------------------- %
 h = computeSVDmasks(h);
 
 %%

@@ -3,7 +3,7 @@ function [tf, avgframe, avgmotion, npix] = WriteBinFile(h)
 
 fid = fopen(h.binfile, 'w');
 
-nvids = numel(h.vr);
+nvids = numel(h.nX);
 npix = [];
 for k = 1:nvids
     h.vr{k}.currentTime = 0;

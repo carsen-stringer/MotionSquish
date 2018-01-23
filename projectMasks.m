@@ -6,6 +6,11 @@ ncomps = 1000;
 k = 0;
 fid = fopen(h.binfile,'r');
 
+%%
+npix = h.npix;
+nframes = h.nframes;
+nt = 5000;
+
 frend = zeros(sum(npix),1,'single');
 motSVD = zeros(nframes,ncomps,'single');
 movSVD = zeros(nframes,ncomps,'single');

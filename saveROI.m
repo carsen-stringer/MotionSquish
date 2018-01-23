@@ -30,9 +30,12 @@ proc.sc = h.sc;
 proc.tsc = h.tsc;
     
 [~,fname,~] = fileparts(h.files{1});
-savefile   = fname(6:end);
+%savefile   = fname(6:end);
 
 fname = [fname '.mat'];
+
+%%
+savefile = fname;
 savepath   = fullfile(h.binfolder, savefile);
 h.settings = savepath;
 save(savepath,'-v7.3','proc');

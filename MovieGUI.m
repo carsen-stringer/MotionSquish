@@ -115,6 +115,9 @@ if folder_name ~= 0
     
         h.files = filename;
         h.folders = folders;
+        h.vr = [];
+        h.nX = [];
+        h.nY = [];
         for j = 1:numel(filename)
             h.vr{j} = VideoReader(filename{j});
             nX{j}    = h.vr{j}.Width;
@@ -339,8 +342,8 @@ end
 
 
 % ------ Save ROI settings and keep list of saved folders ----- %
-function savesettings_Callback(hObject, eventdata, h)
-h = SaveROI(h);
+function savesettings_Callback(hObject, eventdata,h)
+saveROI(h);
 if ~isfield(h,'multifiles')
     ik = 1;
 else
@@ -360,7 +363,6 @@ guidata(hObject,h);
 % ----- ROIs will be processed across expts -------------------- %
 function processROIs_Callback(hObject, eventdata, h)
 h = LumpProc(h);
-h = SaveROI(h);
 guidata(hObject,h);
 
 

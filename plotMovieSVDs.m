@@ -44,7 +44,11 @@ for j = 1:NT
 end
 
 %%
+load('/media/carsen/SSD/M1_SVDs.mat');
 
+%%
+%h=proc;
+nvids = 5;
 for k = 1:nvids
     nx = floor(h.nX{k}/h.sc);
     ny = floor(h.nY{k}/h.sc);
@@ -67,17 +71,16 @@ for k = 1:nvids
 end
 
 %%
-np = [0 h.npix];
+np = [0 size(uMotMask,1)];
 np = cumsum(np)
 ic = ic+1;
 clf;
 for k = 1:nvids
-    i1 = uMotMask(np(k)+[1:h.npix(k)], ic);
+    i1 = uMotMask(np(k)+[1:size(uMotMask,1)], ic);
     
     ib = zeros(floor(h.nY{k}/h.sc), floor(h.nX{k}/h.sc));
     ib(h.wpix{k}) = i1;
     
-    subplot(5,1,k),
     imagesc(ib);
     axis image;
 end
