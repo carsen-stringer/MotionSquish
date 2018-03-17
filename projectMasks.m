@@ -1,51 +1,63 @@
 function h = projectMasks(h)
 %%
-pmovie = 0;
-
-ncomps = 1000;
-k = 0;
-fid = fopen(h.binfile,'r');
-
-%%
+ncomps = size(h.uMotMask,2);
+%
 npix = h.npix;
 nframes = h.nframes;
-nt = 5000;
+nt0 = 5000;
+np = [0 h.npix];
+np = cumsum(np);
 
-frend = zeros(sum(npix),1,'single');
+imend = zeros(sum(npix),1,'single');
 motSVD = zeros(nframes,ncomps,'single');
-movSVD = zeros(nframes,ncomps,'single');
 ifr = 0;
 fprintf('computing time traces\n');
-while 1
-    fr = fread(fid,[sum(npix) nt]);
-    fr = single(fr);
-    if isempty(fr)
-        break;
-    end
-    
-    frd = abs(diff(cat(2,frend,fr),1,2));
-    
-    nt = size(fr, 2);
-    fr2     = bsxfun(@minus, frd, h.avgmotion(:));
-    motSVD(ifr+[1:nt],:)  = fr2' * h.uMotMask;
-       
-    if pmovie
-        fr2     = bsxfun(@minus, fr, h.avgframe(:));
-        movSVD(ifr+[1:nt],:) = fr2' * h.uMovMask;
-    end
-    
-    k=k+1;
-    ifr = ifr + nt;
-    frend = fr(:,end);
-    
-    fprintf('%d / %d done\n',k, round(nframes/nt));
-    
+
+nvids = numel(h.vr);
+for k = 1:nvids
+    h.vr{k}.CurrentTime = 0;
 end
 
-fclose(fid);
+nsegs = ceil(nframes/nt0);
+
+%uMotMask = gpuArray(h.uMotMask);
+
+for j = 1:nsegs
+    for k = 1:nvids
+        imb = zeros(npix(k),nt0,'single');
+        nt = 0;
+        for t = 1:nt0
+            if h.vr{k}.hasFrame
+                im = h.vr{k}.readFrame;
+                im = im(:,:,1);
+                [nx,ny] = size(im);
+                ns = h.sc;
+                im = squeeze(mean(mean(reshape(single(im(1:floor(nx/ns)*ns,1:floor(ny/ns)*ns)),...
+                    ns, floor(nx/ns), ns, floor(ny/ns)), 1),3));
+                imb(:, t) = im(h.wpix{k}(:));
+                nt = nt + 1;
+            end
+        end
+        imb = imb(:,1:nt);
+        %disp(k)
+        imdiff = abs(diff(cat(2,imend(np(k) + [1:npix(k)]),imb),1,2));
+        if j==1
+            imdiff(:,1) = imdiff(:,2);
+        end
+        
+        imdiff = bsxfun(@minus, imdiff, h.avgmotion(h.wpix{k}(:)));
+        %imdiff = gpuArray(imdiff);
+        
+        motSVD(ifr+[1:nt],:)  = motSVD(ifr+[1:nt],:) + ...
+            gather(imdiff' * h.uMotMask(np(k) + [1:npix(k)],:));
+        
+        imend(np(k) + [1:npix(k)]) = imb(:,end);
+    end
+   
+    ifr = ifr + nt;
+    
+    fprintf('%d / %d done in %2.2f\n',j, nsegs,toc);
+    
+end
 
 h.motSVD = motSVD;
-
-if pmovie
-    h.movSVD = movSVD;
-end

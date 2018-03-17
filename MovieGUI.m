@@ -22,7 +22,7 @@ function varargout = MovieGUI(varargin)
 
 % Edit the above text to modify the response to help MovieGUI
 
-% Last Modified by GUIDE v2.5 08-Jan-2018 12:55:25
+% Last Modified by GUIDE v2.5 16-Mar-2018 15:20:15
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,7 +56,7 @@ function MovieGUI_OpeningFcn(hObject, eventdata, h, varargin)
 h.output = hObject;
 
 % default filepath for eye camera
-h.filepath = '/home/carsen/pach/data/EXP/';
+h.filepath = '/mnt/data/EXP/';
 h.suffix   = {'.mj2','.mp4','.mkv','.avi','.mpeg','.mpg','.asf'}; % suffix of eye camera file!
 
 % default filepath to write binary file (ideally an SSD)
@@ -70,10 +70,21 @@ set(h.slider2,'Min',0);
 set(h.slider2,'Max',1);
 set(h.slider2,'Value',0);
 set(h.edit1,'String',num2str(0));
+set(h.pupilsigma,'String',num2str(4));
+h.thres = 4;
 h.saturation = zeros(100,1);
 h.whichfile = 1;
+h.plotROIs = false(4,1);
+for k = 1:length(h.plotROIs)
+    h.locROI{k} = [];
+end
+h.colors = [0 1 0; .3 .7 0; .7 .3 0; .5 .5 0];
 
 axes(h.axes1);
+set(gca,'xtick',[],'ytick',[]);
+box on;
+
+axes(h.axes4);
 set(gca,'xtick',[],'ytick',[]);
 box on;
 
@@ -178,6 +189,10 @@ h.whichfile = get(hObject,'Value');
 h.cframe = 1;
 h.wROI = 1;
 set(h.checkbox16,'Value',1);
+axes(h.axes1);
+cla;
+axes(h.axes4);
+cla;
 PlotFrame(h);
 fprintf('displaying \n%s\n',h.files{h.whichfile});
 h.nframes = h.vr{h.whichfile}.Duration*h.vr{h.whichfile}.FrameRate-1;
@@ -276,7 +291,7 @@ h.cframe = cframe;
 set(h.edit3,'String',num2str(cframe));
 set(h.slider4,'Value',h.cframe/h.nframes);
 PlotFrame(h);
-
+PlotROI(h);
 guidata(hObject,h);
 
 
@@ -291,6 +306,7 @@ h.cframe = cframe;
 set(h.edit3,'String',num2str(cframe));
 set(h.slider1,'Value',h.cframe/h.nframes);
 PlotFrame(h);
+PlotROI(h);
 guidata(hObject,h);
 
 function slider4_CreateFcn(hObject, eventdata, h)
@@ -308,6 +324,7 @@ while get(hObject, 'value') && h.cframe < h.nframes
     set(h.edit3,'String',num2str(h.cframe));
     set(h.slider1,'Value',h.cframe/h.nframes);
     PlotFrame(h);
+    PlotROI(h);
 end
 set(h.slider4,'Value',h.cframe/h.nframes);
 guidata(hObject,h);
@@ -318,9 +335,12 @@ function slider2_Callback(hObject, eventdata, h)
 set(hObject,'Interruptible','On');
 set(hObject,'BusyAction','cancel');
 sats = get(hObject,'Value');
-h.saturation(h.whichfile) = sats;
+h.saturation(h.indROI) = sats;
 set(h.edit1,'String',sprintf('%1.2f',sats));
-PlotFrame(h);
+%PlotFrame(h);
+axes(h.axes4);
+cla;
+PlotROI(h);
 guidata(hObject, h);
 
 function slider2_CreateFcn(hObject, eventdata, h)
@@ -433,80 +453,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-% --- what should be processed --------------------------- %
-function checkbox1_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.whichROIs(1) = wc;
-guidata(hObject,h);
-
-function checkbox2_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.whichROIs(2) = wc;
-guidata(hObject,h);
-
-function checkbox3_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(1,1)  = wc;
-guidata(hObject,h);
-
-function checkbox4_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(2,1)  = wc;
-guidata(hObject,h);
-
-% --- Executes on button press in checkbox5.
-function checkbox5_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(3,1)  = wc;
-guidata(hObject,h);
-
-function checkbox6_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(4,1)  = wc;
-guidata(hObject,h);
-
-function checkbox7_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(1,2)  = wc;
-guidata(hObject,h);
-
-
-function checkbox8_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(2,2)  = wc;
-guidata(hObject,h);
-
-function checkbox9_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(3,2)  = wc;
-guidata(hObject,h);
-
-function checkbox10_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(4,2)  = wc;
-guidata(hObject,h);
-
-function checkbox11_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(1,3)  = wc;
-guidata(hObject,h);
-
-function checkbox12_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(2,3)  = wc;
-guidata(hObject,h);
-
-function checkbox13_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(3,3)  = wc;
-guidata(hObject,h);
-
-function checkbox14_Callback(hObject, eventdata, h)
-wc = get(hObject,'Value');
-h.svdmat(4,3)  = wc;
-guidata(hObject,h);
-
-
 % --- Executes on button press in pushbutton23.
 function pushbutton23_Callback(hObject, eventdata, h)
 % hObject    handle to pushbutton23 (see GCBO)
@@ -521,3 +467,100 @@ function pushbutton23_Callback(hObject, eventdata, h)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox16
+
+
+% --- Executes on button press in pushbutton24.
+function pupil1_Callback(hObject, eventdata, h)
+nxS = floor(h.nX{h.whichfile} / h.sc);
+nyS = floor(h.nY{h.whichfile} / h.sc);
+
+for k = 1:length(h.plotROIs)
+    h.locROI{k} = [];
+end
+h.colors = [0 1 0; .3 .7 0; .7 .3 0; .5 .5 0];
+h.thres = 4;
+
+h.indROI = 1;
+h.plotROIs(h.indROI) = 1;
+h.ROIfile(h.indROI) = h.whichfile;
+
+if isempty(h.locROI{h.indROI})
+    ROI0 = [nxS*.25 nyS*.25 nxS*.5 nyS*.5];
+else
+    ROI0 = h.locROI{h.indROI};
+end
+
+ROI = DrawROI(h,ROI0);
+ROI = OnScreenROI(ROI, nxS, nyS);
+
+h.locROI{h.indROI} = ROI;
+
+PlotFrame(h);
+PlotROI(h);
+
+guidata(hObject, h);
+
+% --- Executes on button press in pushbutton25.
+function whisker_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton25 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushbutton26.
+function pupil2_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton26 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushbutton27.
+function otherROI_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton27 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on slider movement.
+function slider5_Callback(hObject, eventdata, handles)
+% hObject    handle to slider5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% --- Executes during object creation, after setting all properties.
+function slider5_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+
+function pupilsigma_Callback(hObject, eventdata, h)
+% hObject    handle to edit7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit7 as text
+%        str2double(get(hObject,'String')) returns contents of edit7 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function pupilsigma_CreateFcn(hObject, eventdata, h)
+% hObject    handle to edit7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

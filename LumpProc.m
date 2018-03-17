@@ -6,18 +6,26 @@ pmovie = 0;
 tic;
 h.binfile = fullfile(h.binfolder, 'mov.bin');
 
+% for compressed files only
 % make binary file------------------------------- %
-fprintf('writing ROIs to binary file\n');
-[nframes, avgframe, avgmotion, npix] = WriteBinFile(h);
+% fprintf('writing ROIs to binary file\n');
+% [nframes, avgframe, avgmotion, npix] = WriteBinFile(h);
+% h.nframes = nframes;
+% h.avgframe = avgframe;
+% h.avgmotion = avgmotion;
+% h.npix = npix;
+% h.wpix = wpix;
 
-h.fileframes = nframes;
-h.avgframe = avgframe;
-h.avgmotion = avgmotion;
-h.npix      = npix;
+% for uncompressed files
+h = subsampledMean(h);
+
+
+keyboard;
 
 %%
 % compute svd ----------------------------- %
-h = computeSVDmasks(h);
+%h = computeSVDmasks(h);
+h = computeSVDmotion(h);
 
 %%
 % get timetraces for U ------------------------------- %

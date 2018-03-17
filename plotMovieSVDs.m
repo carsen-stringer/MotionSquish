@@ -1,3 +1,6 @@
+load('/media/carsen/SSD/cam0_GP6_2018_03_02_1_nf.mat');
+
+
 bin = 5;
 bm = squeeze(sum(reshape(motSVD(1:floor(size(motSVD,1)/bin)*bin,:), bin, [], 1000),1));
 
@@ -44,9 +47,6 @@ for j = 1:NT
 end
 
 %%
-load('/media/carsen/SSD/M1_SVDs.mat');
-
-%%
 %h=proc;
 nvids = 5;
 for k = 1:nvids
@@ -67,21 +67,53 @@ for k = 1:nvids
     else
         h.wpix{k} = true(nx,ny);
     end
+    h.npix(k) = sum(h.wpix{k}(:));
+end
+
+%%
+np = [0 h.npix];
+np = cumsum(np);
+mall=[];
+for ic = 1:100
+for k = 1:nvids-1
+    i1 = uMotMask(np(k)+[1:h.npix(k)], ic);
+    
+    ib = zeros(floor(h.nY{k}/h.sc), floor(h.nX{k}/h.sc));
+    ib(h.wpix{k}) = i1;
+    %subplot(1,4,k),
+    %imagesc(ib);
+    %axis image;
+    
+    mc{k} = ib;
+end
+    mall([1:159]+5,1:140,ic) = mc{2}(:,1:140);
+    %mall(159+[1:111],1:140,ic) = mc{1}([1:111],20+[1:140]);
+    mall([1:85],[1:160]+140,ic) = mc{3}(35+[1:85],20+[1:160]);
+    mall([1:85]+85,[1:147]+148,ic) = mc{4}(30+[1:85],:);
+    
+    mall(:,:,ic) = (mall(:,:,ic) - mean(reshape(mall(:,:,ic),[],1),1))/std(reshape(mall(:,:,ic),[],1));
     
 end
 
 %%
-np = [0 size(uMotMask,1)];
-np = cumsum(np)
-ic = ic+1;
+clf
+vr = VideoWriter('/media/carsen/DATA2/svds.avi');
+vr.FrameRate = 1;
+open(vr);
+set(gcf,'color','w');
+
 clf;
-for k = 1:nvids
-    i1 = uMotMask(np(k)+[1:size(uMotMask,1)], ic);
-    
-    ib = zeros(floor(h.nY{k}/h.sc), floor(h.nX{k}/h.sc));
-    ib(h.wpix{k}) = i1;
-    
-    imagesc(ib);
-    axis image;
+for j = [1:size(mall,3)]
+    mc = mall(:,:,j);
+    mc = mc - min(mc(:));
+    mc = mc/max(mc(:));
+    mc0 = max(mean(mc(:))-.5*std(mc(:)), mc);
+    mc0 = min(mean(mc(:))+.5*std(mc(:)), mc0);
+    mc0 = mc0 - min(mc0(:));
+    mc0 = mc0 / max(mc0(:));
+    imagesc(mc0);
+    writeVideo(vr, mc0);
 end
 
+close(vr);
+axis image;

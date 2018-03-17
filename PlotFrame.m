@@ -10,7 +10,7 @@ sc = h.sc;
 tsc = h.tsc;
 
 axes(h.axes1);
-cla;
+%cla;
 colormap('gray');
 
 h.vr{k}.currentTime = h.vr{k}.FrameRate * h.cframe;
@@ -99,20 +99,15 @@ else
     
 end
 hold off;
-% show difference between frames for movement areas
-% if indROI > 2
-%     fr     = my_conv2(fr, tsc, 3);
-%     %keyboard;
-%     tdiff  = abs(fr(:,:,6)-fr(:,:,5));
-%     tdiff  = round(tdiff * tsc);
-%     
-%     tdiff  = max(0, 5 - tdiff);
-%     sat    = min(4.99, max(0.01,(1-h.saturation(indROI))*5));
-%     
-%     imagesc(tdiff,[0 sat]);
-%     %keyboard;
-% end
-    
+
+
+indROI = find(h.plotROIs);
+hold all;
+if ~isempty(indROI)
+    for j = indROI'
+        rectangle('position',h.locROI{j},'edgecolor',h.colors(j,:),'linewidth',2);
+    end
+end
 axis off;
 axis image;
 drawnow;

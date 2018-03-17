@@ -2,13 +2,13 @@
 function h = computeSVDmasks(h)
 
 pmovie = 0;
-nt = 5000;
+nt = 2000;
 k = 0;
 
 npix = h.npix;
 nframes = h.nframes;
 
-ncomps = 1000;
+ncomps = 500;
 fprintf('computing SVDs across all movies\n');
 nsegs = floor(10000 / (ncomps/2));
 if pmovie
@@ -23,7 +23,7 @@ while 1
         break;
     end
     
-    if mod(k, round(nframes/nt/20)) == 0
+    if rem(round(nframes/nt), nsegs) == 0
         if pmovie
             fdata   = single(fdata);
             fdata0  = bsxfun(@minus, fdata, h.avgframe(:));
